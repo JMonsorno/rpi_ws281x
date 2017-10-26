@@ -7,6 +7,42 @@
 #include "php.h"
 #include "ext/standard/info.h"
 #include "php_rpi_ws281x.h"
+#include "ws2811.h"
+
+#define TARGET_FREQ             WS2811_TARGET_FREQ
+#define GPIO_PIN                18
+#define DMA                     5
+//#define STRIP_TYPE            WS2811_STRIP_RGB		// WS2812/SK6812RGB integrated chip+leds
+#define STRIP_TYPE              WS2811_STRIP_GBR		// WS2812/SK6812RGB integrated chip+leds
+//#define STRIP_TYPE            SK6812_STRIP_RGBW		// SK6812RGBW (NOT SK6812RGB)
+
+#define WIDTH                   8
+#define HEIGHT                  8
+#define LED_COUNT               (WIDTH * HEIGHT)
+
+ws2811_t ledstring =
+{
+    .freq = TARGET_FREQ,
+    .dmanum = DMA,
+    .channel =
+    {
+        [0] =
+        {
+            .gpionum = GPIO_PIN,
+            .count = LED_COUNT,
+            .invert = 0,
+            .brightness = 255,
+            .strip_type = STRIP_TYPE,
+        },
+        [1] =
+        {
+            .gpionum = 0,
+            .count = 0,
+            .invert = 0,
+            .brightness = 0,
+        },
+    },
+};
 
 /* {{{ void rpi_ws281x_test1()
  */
@@ -34,6 +70,34 @@ PHP_FUNCTION(rpi_ws281x_test2)
 	retval = strpprintf(0, "Hello %s", var);
 
 	RETURN_STR(retval);
+}
+
+/* {{{ void rpi_ws281x_test3( [ long $var ] )
+ */
+PHP_FUNCTION(rpi_ws281x_test3)
+{
+  zend_long led_no = 0;
+  ws2811_return_t ret;
+
+  ZEND_PARSE_PARAMETERS_START(0, 1)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_LONG(led_no)
+  ZEND_PARSE_PARAMETERS_END();
+
+    
+  if ((ret = ws2811_init(&ledstring)) != WS2811_SUCCESS)
+  {
+    fprintf(stderr, "ws2811_init failed: %s\n", ws2811_get_return_t_str(ret));
+  } else {
+    
+    ledstring.channel[0].leds[led_no] = 0x0000FF;
+    
+     if ((ret = ws2811_render(&ledstring)) != WS2811_SUCCESS)
+    {
+      fprintf(stderr, "ws2811_render failed: %s\n", ws2811_get_return_t_str(ret));
+    }
+    //ws2811_fini(&ledstring);
+  }
 }
 /* }}}*/
 
@@ -67,6 +131,10 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO(arginfo_rpi_ws281x_test2, 0)
 	ZEND_ARG_INFO(0, str)
 ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO(arginfo_rpi_ws281x_test3, 0)
+	ZEND_ARG_INFO(0, long)
+ZEND_END_ARG_INFO()
 /* }}} */
 
 /* {{{ rpi_ws281x_functions[]
@@ -74,6 +142,7 @@ ZEND_END_ARG_INFO()
 const zend_function_entry rpi_ws281x_functions[] = {
 	PHP_FE(rpi_ws281x_test1,		arginfo_rpi_ws281x_test1)
 	PHP_FE(rpi_ws281x_test2,		arginfo_rpi_ws281x_test2)
+	PHP_FE(rpi_ws281x_test3,		arginfo_rpi_ws281x_test3)
 	PHP_FE_END
 };
 /* }}} */
