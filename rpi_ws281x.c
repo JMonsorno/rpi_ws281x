@@ -5,6 +5,7 @@
 #endif
 
 #include "php.h"
+#include "zend_types.h"
 #include "ext/standard/info.h"
 #include "php_rpi_ws281x.h"
 #include "ws2811.h"
@@ -16,9 +17,7 @@
 #define STRIP_TYPE              WS2811_STRIP_GBR		// WS2812/SK6812RGB integrated chip+leds
 //#define STRIP_TYPE            SK6812_STRIP_RGBW		// SK6812RGBW (NOT SK6812RGB)
 
-#define WIDTH                   8
-#define HEIGHT                  8
-#define LED_COUNT               (WIDTH * HEIGHT)
+#define LED_COUNT               30
 
 ws2811_t ledstring =
 {
@@ -72,32 +71,87 @@ PHP_FUNCTION(rpi_ws281x_test2)
 	RETURN_STR(retval);
 }
 
-/* {{{ void rpi_ws281x_test3( [ long $var ] )
+/* {{{ object rpi_ws281x_test3( [ long $var ] )
  */
 PHP_FUNCTION(rpi_ws281x_test3)
 {
   zend_long led_no = 0;
+  zend_long led_color = 0;
   ws2811_return_t ret;
 
-  ZEND_PARSE_PARAMETERS_START(0, 1)
-    Z_PARAM_OPTIONAL
+  ZEND_PARSE_PARAMETERS_START(2, 2)
     Z_PARAM_LONG(led_no)
+    Z_PARAM_LONG(led_color)
   ZEND_PARSE_PARAMETERS_END();
 
-    
+
   if ((ret = ws2811_init(&ledstring)) != WS2811_SUCCESS)
   {
     fprintf(stderr, "ws2811_init failed: %s\n", ws2811_get_return_t_str(ret));
   } else {
-    
-    ledstring.channel[0].leds[led_no] = 0x0000FF;
-    
+
+    ledstring.channel[0].leds[led_no] = led_color;
+
      if ((ret = ws2811_render(&ledstring)) != WS2811_SUCCESS)
     {
       fprintf(stderr, "ws2811_render failed: %s\n", ws2811_get_return_t_str(ret));
     }
     //ws2811_fini(&ledstring);
   }
+
+  //convert_to_object(ledstring);
+}
+/* }}}*/
+
+/* {{{ void rpi_ws281x( [ long $gpio_pin, long $count, long *$var ] )
+ */
+PHP_FUNCTION(rpi_ws281x_render)
+{
+  long gpio_pin;
+  long count;
+  zval *leds;
+  zval *led;
+  HashPosition position;
+  ws2811_return_t ret;
+  long i = 0;
+
+  ZEND_PARSE_PARAMETERS_START(3, 3)
+    Z_PARAM_LONG(gpio_pin)
+    Z_PARAM_LONG(count)
+    Z_PARAM_ARRAY(leds)
+  ZEND_PARSE_PARAMETERS_END();
+
+  ledstring.channel[0].count = count;
+  ledstring.channel[0].gpionum = gpio_pin;
+
+  if ((ret = ws2811_init(&ledstring)) != WS2811_SUCCESS)
+  {
+    fprintf(stderr, "ws2811_init failed: %s\n", ws2811_get_return_t_str(ret));
+    return;
+  }
+
+  for (zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(leds), &position);
+       (led = zend_hash_get_current_data_ex(Z_ARRVAL_P(leds), &position));
+       zend_hash_move_forward_ex(Z_ARRVAL_P(leds), &position)) {
+
+    if (i >= count) {
+      zend_throw_exception(NULL, "LED array is longer than count.", 0);
+    }
+
+    if(Z_TYPE_P(led) == IS_LONG) {
+      ledstring.channel[0].leds[i] = Z_LVAL_P(led);
+    } else {
+      zend_throw_exception(NULL, "LED array can only contain integers.", 0);
+    }
+    ++i;
+  }
+
+  if ((ret = ws2811_render(&ledstring)) != WS2811_SUCCESS)
+  {
+    fprintf(stderr, "ws2811_render failed: %s\n", ws2811_get_return_t_str(ret));
+  }
+
+  ws2811_fini(&ledstring);
 }
 /* }}}*/
 
@@ -143,6 +197,7 @@ const zend_function_entry rpi_ws281x_functions[] = {
 	PHP_FE(rpi_ws281x_test1,		arginfo_rpi_ws281x_test1)
 	PHP_FE(rpi_ws281x_test2,		arginfo_rpi_ws281x_test2)
 	PHP_FE(rpi_ws281x_test3,		arginfo_rpi_ws281x_test3)
+	PHP_FE(rpi_ws281x_render,		NULL)
 	PHP_FE_END
 };
 /* }}} */
