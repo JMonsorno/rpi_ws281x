@@ -2,21 +2,24 @@
 
 include_once('WS281X.php');
 include_once('Color.php');
+include_once('HueMimic.php');
+
+$mimic = new HueMimic();
 
 $lightStrip = new WS281X(18, 150, .1);
 
 $lightStrip
-  // ->Set(Color::BLUE(), [], TRUE)
-  // ->Set(Color::GREEN(), range(10, 149), TRUE)
-  // ->Sleep(1)
-  // ->Push([Color::WHITE(), Color::NONE(), Color::WHITE(), Color::NONE(), Color::WHITE()], [], 100)
-  // ->Sleep(1)
-  // ->Flash(Color::RED(), range(0, 9), 200, 2)
-  // ->Sleep(1)
-  // ->Cascade(Color::BLUE(), range(149, 10), 10)
-  // ->Cascade(Color::GREEN(), range(9, 0), 10)
-  // ->Sleep(1)
-  // ->Cascade(Color::CLEAR(), [], 10)
+  ->Set(Color::BLUE(), [], TRUE)
+  ->Set(Color::GREEN(), range(10, 149), TRUE)
+  ->Sleep(1)
+  ->Push([Color::WHITE(), Color::NONE(), Color::WHITE(), Color::NONE(), Color::WHITE()], [], 100)
+  ->Sleep(1)
+  ->Flash(Color::RED(), range(0, 9), 200, 2)
+  ->Sleep(1)
+  ->Cascade(Color::BLUE(), range(149, 10), 10)
+  ->Cascade(Color::GREEN(), range(9, 0), 10)
+  ->Sleep(1)
+  ->Cascade(Color::CLEAR(), [], 10)
   ->TheaterChase([Color::RED(), Color::OFF(), Color::OFF(), Color::OFF(), Color::OFF()], [], 100, 40)
   ->Sleep(0);
 // for($loop = 149; $loop > 0; --$loop) {
