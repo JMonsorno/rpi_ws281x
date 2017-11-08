@@ -51,15 +51,17 @@ class WS281X {
     return range(0, count($this->leds) - 1);
   }
 
-  public function Render() :self {
+  public function Render(bool $save = TRUE) :self {
     rpi_ws281x_render($this->GpioPin, 
       count($this->leds), 
       array_map(function($led) { return $led->GetColor()->Intensify($this->Intensity)->ToColorInt(); }, $this->leds));
-    $this->Save();
+    if ($save) {
+      $this->Save();
+    }
     return $this;
   }
 
-  public function Set(Color $color, $range = NULL, bool $render = FALSE): self {
+  public function Set(Color $color, $range = NULL, bool $render = FALSE, bool $save = TRUE): self {
     if (isset($range) && is_numeric($range)) {
       $range = [$range]; //if input is numeric, set range to single element array
     } elseif(!isset($range) || !is_array($range) || count($range) == 0) {
@@ -75,7 +77,7 @@ class WS281X {
 
     //Render immediately if requested
     if ($render) {
-      $this->Render();
+      $this->Render($save);
     }
     
     return $this;
@@ -127,7 +129,7 @@ class WS281X {
       if (!isset($color)) {
         $color = Color::RED();
       }
-      $this->Set($color, $range, TRUE);
+      $this->Set($color, $range, TRUE, FALSE);
       $this->MSleep($delay);
       $this->Clear($range, TRUE);
       $this->MSleep($delay / 2);
@@ -135,7 +137,7 @@ class WS281X {
 
     if ($restoreOriginal) {
       $this->leds = $temp;
-      $this->Render();
+      $this->Render(FALSE);
     }
     
     return $this;
@@ -154,14 +156,14 @@ class WS281X {
       for($i = 0; $i < count($range); ++$i) {
         $this->Set($colors[$i % $colorCount], $range[$i], FALSE);
       }
-      $this->Render();
+      $this->Render(FALSE);
 
       $color = array_pop($colors);
       array_unshift($colors, $color);
       $colors = array_values($colors);
       $this->MSleep($delay);
     }
-    
+    $this->Save();
     return $this;
   }
 
@@ -175,10 +177,10 @@ class WS281X {
       $range = $this->GetFullRange();
     }
     foreach($range as $ledNum) {
-      $this->Set($color, $ledNum, TRUE);
+      $this->Set($color, $ledNum, TRUE, FALSE);
       $this->MSleep($delay);
     }
-    
+    $this->Save(); 
     return $this;
   }
   
@@ -209,7 +211,7 @@ class WS281X {
         $this->Set($colorsInStep[$j], $ledNum, FALSE);
       }
       
-      $this->Render()->MSleep($delay);
+      $this->Render(FALSE)->MSleep($delay);
       
       foreach($previousColors as $ledNum=>$color) {
         $this->Set($color, $ledNum, FALSE);
