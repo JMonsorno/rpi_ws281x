@@ -10,12 +10,41 @@ class WS281X {
   private $initialized = FALSE;
 
   private $leds = [];
+  private $filename;
 
   public function __construct(int $gpioPin = 18, int $lightCount = 150, float $intensity = 1) {
     $this->GpioPin = $gpioPin;
     $this->Intensity = $intensity;
 
-    $this->leds = array_fill(0, $lightCount, COLOR::CLEAR());
+    $this->leds = [];
+    $this->filename = "/var/WS281X/$gpioPin-$lightCount.save";
+
+    if (file_exists($this->filename)) {
+      $leds = json_decode(file_get_contents($this->filename));
+    }
+
+    if(isset($leds)) {
+      foreach($leds as $objectData) {
+        $this->leds[] = Led::Hydrate($objectData);
+      }
+    } else {   
+      for($i = 0; $i < $lightCount; ++$i) {
+        $this->leds[] = new Led($i);
+      }
+      $this->Save();
+    }
+  }
+
+  public function Save() {
+    file_put_contents($this->filename, json_encode($this->leds));
+  }
+
+  public function GetCount(): int {
+    return count($this->leds);
+  }
+
+  public function GetLeds(): array {
+    return $this->leds;
   }
 
   private function GetFullRange(): array {
@@ -23,8 +52,10 @@ class WS281X {
   }
 
   public function Render() :self {
-    rpi_ws281x_render($this->GpioPin, count($this->leds), array_map(function($led) { return $led->Intensify($this->Intensity)->ToColorInt(); }, $this->leds));
-
+    rpi_ws281x_render($this->GpioPin, 
+      count($this->leds), 
+      array_map(function($led) { return $led->GetColor()->Intensify($this->Intensity)->ToColorInt(); }, $this->leds));
+    $this->Save();
     return $this;
   }
 
@@ -38,7 +69,7 @@ class WS281X {
     //Loop through range to setup Led array
     foreach($range as $ledNum) {
       if ($ledNum >= 0 && $ledNum < count($this->leds) && !$color->IsNone()) {
-        $this->leds[$ledNum] = $color;
+        $this->leds[$ledNum]->SetColor($color);
       }
     }
 
@@ -174,7 +205,7 @@ class WS281X {
       $endLedIndex = $i < count($range) ? $i : count($range) - 1;
       for($j = 0; $j < count($colorsInStep); $j++) {
         $ledNum = $range[$endLedIndex - $j];
-        $previousColors[$ledNum] = $this->leds[$ledNum];
+        $previousColors[$ledNum] = $this->leds[$ledNum]->GetColor();
         $this->Set($colorsInStep[$j], $ledNum, FALSE);
       }
       

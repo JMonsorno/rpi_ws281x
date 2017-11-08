@@ -4,7 +4,7 @@ class Color {
   private $red, $green, $blue;
   private $flags = 0;
   
-  private const NONE = 1 << 1;
+  const NONE = 1 << 1;
   
   private function __construct(int $flags = 0) 
   {
@@ -37,6 +37,10 @@ class Color {
   
   public function ToColorInt() :int {
     return ($this->blue << 16) + ($this->green << 8) + ($this->red << 0);
+  }
+
+  public function ToRGB() :array {
+    return [$this->red, $this->green, $this->blue];
   }
   
   public function Intensify(float $factor) :self{

@@ -6,12 +6,12 @@ class HueMimic {
   
   private $apiKeys = [];
   
-  function __construct() {
+  public function __construct() {
     $response = json_decode(file_get_contents('http://' . $this->hubApi . '/api/' . $this->apiKey));
     $this->apiKeys = array_keys(get_object_vars($response->config->whitelist));
   }
   
-  protected function CheckApi(string $apiKey): bool {
+  public function CheckApi(string $apiKey): bool {
     return in_array($apiKey, $this->apiKeys);
   }
 }
