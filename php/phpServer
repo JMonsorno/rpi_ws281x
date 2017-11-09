@@ -1,4 +1,7 @@
-until (php -S 0.0.0.0:80 -t ../../html/ request.php); do
+BASEDIR=$(dirname "$0")
+pushd "$BASEDIR"
+/usr/bin/php onReboot.php
+until (/usr/bin/php -S 0.0.0.0:80 -t ../../html/ request.php); do
   echo "PHP Server crashed with exit code $?.  Respawning.."
   sleep 1
 done
