@@ -11,17 +11,17 @@ $lightStrip = new WS281X(18, 150, .1);
 
 $lightStrip
   ->Set(Color::BLUE(), [], TRUE)
-#  ->Set(Color::GREEN(), range(10, 149), TRUE)
+  ->Set(Color::GREEN(), range(10, 149), TRUE)
   ->Sleep(3)
-#  ->Push([Color::WHITE(), Color::NONE(), Color::WHITE(), Color::NONE(), Color::WHITE()], [], 100)
-#  ->Sleep(1)
-#  ->Flash(Color::RED(), range(0, 9), 200, 2)
-#  ->Sleep(1)
-#  ->Cascade(Color::BLUE(), range(149, 10), 10)
-#  ->Cascade(Color::GREEN(), range(9, 0), 10)
-#  ->Sleep(1)
-#  ->Cascade(Color::CLEAR(), [], 10)
-#  ->TheaterChase([Color::RED(), Color::OFF(), Color::OFF(), Color::OFF(), Color::OFF()], [], 100, 40)
+  ->Push([Color::WHITE(), Color::NONE(), Color::WHITE(), Color::NONE(), Color::WHITE()], [], 100)
+  ->Sleep(1)
+  ->Flash(Color::RED(), range(0, 9), 200, 2)
+  ->Sleep(1)
+  ->Cascade(Color::BLUE(), range(149, 10), 10)
+  ->Cascade(Color::GREEN(), range(9, 0), 10)
+  ->Sleep(1)
+  ->Cascade(Color::CLEAR(), [], 10)
+  ->TheaterChase([Color::RED(), Color::OFF(), Color::OFF(), Color::OFF(), Color::OFF()], [], 100, 40)
   ->Sleep(0);
 // for($loop = 149; $loop > 0; --$loop) {
   // $lightStrip->SetLed($loop, 0, 0, 0,  TRUE);
@@ -48,5 +48,5 @@ $lightStrip
   // usleep(250000);
 // }
 
-$lightStrip->Clear();
+//$lightStrip->Clear();
 //var_dump(rpi_ws281x_test3(8, (55<<16) + (55 << 8) + (55 << 0)));

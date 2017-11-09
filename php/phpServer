@@ -1,0 +1,4 @@
+until (php -S 0.0.0.0:80 -t ../../html/ request.php); do
+  echo "PHP Server crashed with exit code $?.  Respawning.."
+  sleep 1
+done

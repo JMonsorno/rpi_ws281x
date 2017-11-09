@@ -88,6 +88,40 @@ class ApiRequest {
     }
 
     $basePropObjects = array_filter($baseProps, function($propName) use($singleLight) { return is_object($singleLight->$propName); });
+    if($action == "animate") {
+      $strand = DI::GetStrand();
+      $type = $this->body->type;
+      $colors = NULL;
+      @$colorsFromInput = $this->body->colors;
+      if(isset($colorsFromInput) && is_array($colorsFromInput)) {
+        $colors = array_map(function($c) { list($r, $g, $b) = $c; return Color::FromRGB($r, $g, $b); }, $colorsFromInput);
+      } else {
+        @$colorsFromInput = $this->body->color;
+        if(isset($colorsFromInput) && is_array($colorsFromInput)) {
+          list($r, $g, $b) = $colorsFromInput; 
+          $colors = Color::FromRGB($r, $g, $b);
+        }
+      }
+      $loop = 1;
+      if (isset($this->body->loop)) {
+        $loop = $this->body->loop;
+      }
+      for($i = 0; $i < $loop; ++$i) {
+        if (isset($this->body->delay)) {
+          if (isset($this->body->steps)) {
+            $strand->$type($colors, $range, $this->body->delay, $this->body->steps);
+          } elseif (isset($this->body->times)) {
+            $strand->$type($colors, $range, $this->body->delay, $this->body->times);
+          } else {
+            $strand->$type($colors, $range, $this->body->delay);
+          }
+        } else {
+          $strand->$type($colors, $range);
+        }
+      }
+      $this->AddSuccessfulResponse('type', $type);
+      $this->WriteResponseOut();
+    }    
     if (!in_array($action, $basePropObjects)) {
       $this->ErrorOut(3);
     }
