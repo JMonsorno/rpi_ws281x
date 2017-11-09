@@ -121,7 +121,7 @@ class WS281X {
   }
 
   public function Flash(Color $color = NULL, $range = NULL, int $delay = 250, int $times = 4, bool $restoreOriginal = TRUE) :self {
-    $temp = $this->leds;
+    $originalColors = array_map(function($led) { return $led->GetColor(); }, $this->leds);
 
     for($i = 0; $i < $times; ++$i) {
       $this->Clear($range, TRUE);
@@ -136,10 +136,11 @@ class WS281X {
     }
 
     if ($restoreOriginal) {
-      $this->leds = $temp;
-      $this->Render(FALSE);
-    }
-    
+      for($i = 0; $i < count($originalColors); ++$i) {
+        $this->leds[$i]->SetColor($originalColors[$i]);
+      }
+      $this->Render();
+    } 
     return $this;
   }
 
